@@ -3,7 +3,7 @@ import numpy as np
 import gym
 
 # Load the Taxi-v3 environment
-env = gym.make("Taxi-v3")
+env = gym.make("Taxi-v3", render_mode="ansi")
 
 # Load trained Q-table
 q_table = np.load("q_table.npy")  # Ensure this file exists
