@@ -1,6 +1,7 @@
 import streamlit as st
 import numpy as np
 import gym
+import io
 
 # Load the Taxi-v3 environment
 env = gym.make("Taxi-v3", render_mode="ansi")
@@ -10,19 +11,23 @@ q_table = np.load("q_table.npy")  # Ensure this file exists
 
 # Initialize session state for game tracking
 if "state" not in st.session_state:
-    st.session_state.state = env.reset()  # Reset returns a single state (int)
+    st.session_state.state, _ = env.reset()  # Fix: Unpack (state, info)
     st.session_state.done = False
 
 st.title("🚖 Taxi Game - Play & Learn with AI")
 
 # Display the current state of the environment
 st.subheader("Current State")
-st.text(env.render())  # Render the environment as text (no mode="ansi")
+output = env.render()
+output_text = io.StringIO()
+print(output, file=output_text)
+st.text(output_text.getvalue())  # Fix: Proper text-based rendering
 
 # Manual controls for kids
 st.subheader("Move the Taxi 🚕")
 col1, col2, col3 = st.columns(3)
 
+action = None
 with col1:
     if st.button("⬆️ Move Up"):
         action = 1
@@ -39,8 +44,8 @@ elif st.button("🚖 Pick/Drop Passenger"):
     action = 4
 
 # Process action
-if "action" in locals():
-    next_state, reward, done, info = env.step(action)
+if action is not None:
+    next_state, reward, done, _, _ = env.step(action)  # Fix: Handle step() correctly
     st.session_state.state = next_state
     st.session_state.done = done
     st.write(f"Action Taken: {action}")
@@ -54,7 +59,7 @@ st.subheader("Watch AI Play 👀")
 if st.button("Let AI Play"):
     state = st.session_state.state
     action = np.argmax(q_table[state, :])
-    next_state, reward, done, info = env.step(action)
+    next_state, reward, done, _, _ = env.step(action)  # Fix: Handle step() correctly
     st.session_state.state = next_state
     st.session_state.done = done
     st.write(f"AI Action: {action}")
@@ -64,6 +69,7 @@ if st.button("Let AI Play"):
 
 # Restart game button
 if st.button("🔄 Restart Game"):
-    st.session_state.state = env.reset()
+    st.session_state.state, _ = env.reset()  # Fix: Unpack (state, info)
     st.session_state.done = False
     st.write("Game restarted! Try again.")
+
